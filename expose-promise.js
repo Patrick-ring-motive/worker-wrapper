@@ -58,3 +58,5 @@ class ExposedPromise {
     return this.promise.finally(onFinally);
   }
 }
+
+module.exports = { ExposedPromise };

@@ -1,4 +1,4 @@
-const { ExposedPromise } = require("./exposed-promise");
+const { ExposedPromise } = require("./expose-promise");
 
 /**
  * Symbol key for the originating ExposedPromise on every resolved wrapper object.
@@ -63,6 +63,7 @@ class WorkerWrapper {
     };
 
     this._worker.onmessage = (event) => {
+      if (!event.data || typeof event.data !== "object") return;
       const { type, id, result, error } = event.data;
 
       // Handshake

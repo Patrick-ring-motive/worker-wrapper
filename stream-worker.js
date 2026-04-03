@@ -33,20 +33,34 @@ async function pipeToParent(streamId, readable, signal) {
   try {
     while (true) {
       if (signal.aborted) break;
-      const { done, value } = await reader.read();
+      const {
+        done,
+        value
+      } = await reader.read();
       if (done) break;
 
       // Transfer the underlying ArrayBuffer for zero-copy when possible
       const transfer = value?.buffer ? [value.buffer] : [];
-      postMessage({ type: "stream-chunk", streamId, chunk: value }, transfer);
+      postMessage({
+        type: "stream-chunk",
+        streamId,
+        chunk: value
+      }, transfer);
     }
 
     if (!signal.aborted) {
-      postMessage({ type: "stream-end", streamId });
+      postMessage({
+        type: "stream-end",
+        streamId
+      });
     }
   } catch (err) {
     if (err.name !== "AbortError") {
-      postMessage({ type: "stream-error", streamId, error: err.message });
+      postMessage({
+        type: "stream-error",
+        streamId,
+        error: err.message
+      });
     }
   } finally {
     reader.releaseLock();
@@ -60,15 +74,24 @@ onmessage = async (event) => {
   const data = event.data;
   if (!data || typeof data !== "object") return;
 
-  const { type, streamId } = data;
+  const {
+    type,
+    streamId
+  } = data;
 
   if (type === "stream-start") {
-    const { url, fetchOptions } = data;
+    const {
+      url,
+      fetchOptions
+    } = data;
     const ac = new AbortController();
     activeStreams.set(streamId, ac);
 
     try {
-      const response = await fetch(url, { ...fetchOptions, signal: ac.signal });
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: ac.signal
+      });
 
       if (!response.ok) {
         postMessage({
@@ -83,7 +106,11 @@ onmessage = async (event) => {
       await pipeToParent(streamId, response.body, ac.signal);
     } catch (err) {
       if (err.name !== "AbortError") {
-        postMessage({ type: "stream-error", streamId, error: err.message });
+        postMessage({
+          type: "stream-error",
+          streamId,
+          error: err.message
+        });
       }
       activeStreams.delete(streamId);
     }
@@ -99,4 +126,6 @@ onmessage = async (event) => {
 };
 
 // --- Ready handshake (WorkerWrapper protocol) ------------------------------
-postMessage({ type: "ready" });
+postMessage({
+  type: "ready"
+});

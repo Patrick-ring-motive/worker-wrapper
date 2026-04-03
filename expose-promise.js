@@ -37,8 +37,14 @@ class ExposedPromise {
 
     // Source of truth for status/value — updates after thenable assimilation
     this.promise.then(
-      (value)  => { this.status = "fulfilled"; this.value = value; },
-      (reason) => { this.status = "rejected";  this.value = reason; }
+      (value) => {
+        this.status = "fulfilled";
+        this.value = value;
+      },
+      (reason) => {
+        this.status = "rejected";
+        this.value = reason;
+      }
     ).catch(() => {}); // prevent unhandled rejection warning on the tracking branch
   }
 
@@ -50,13 +56,13 @@ class ExposedPromise {
     return this.promise.then(onFulfilled, onRejected);
   }
 
-  catch(onRejected) {
+  catch (onRejected) {
     return this.promise.catch(onRejected);
-  }
-
-  finally(onFinally) {
+  } finally(onFinally) {
     return this.promise.finally(onFinally);
   }
 }
 
-module.exports = { ExposedPromise };
+module.exports = {
+  ExposedPromise
+};

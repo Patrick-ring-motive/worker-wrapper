@@ -1,4 +1,6 @@
-const { WorkerWrapper } = require("./index");
+const {
+  WorkerWrapper
+} = require("./index");
 
 /**
  * StreamBridge
@@ -155,7 +157,12 @@ class StreamBridge {
   /**
    * Route an incoming stream message to the correct ReadableStream controller.
    */
-  _onStreamMessage({ type, streamId, chunk, error }) {
+  _onStreamMessage({
+    type,
+    streamId,
+    chunk,
+    error
+  }) {
     const controller = this._streams.get(streamId);
     if (!controller) return;
 
@@ -189,4 +196,6 @@ class StreamBridge {
   }
 }
 
-module.exports = { StreamBridge };
+module.exports = {
+  StreamBridge
+};

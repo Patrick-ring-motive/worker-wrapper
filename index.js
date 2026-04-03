@@ -1,4 +1,6 @@
-const { ExposedPromise } = require("./expose-promise");
+const {
+  ExposedPromise
+} = require("./expose-promise");
 
 /**
  * Symbol key for the originating ExposedPromise on every resolved wrapper object.
@@ -64,7 +66,12 @@ class WorkerWrapper {
 
     this._worker.onmessage = (event) => {
       if (!event.data || typeof event.data !== "object") return;
-      const { type, id, result, error } = event.data;
+      const {
+        type,
+        id,
+        result,
+        error
+      } = event.data;
 
       // Handshake
       if (type === "ready") {
@@ -76,7 +83,11 @@ class WorkerWrapper {
       if (id && this.transactions.has(id)) {
         const ep = this.transactions.get(id);
         this.transactions.delete(id);
-        ep.resolve({ value: result, error, [TRANSACTION]: ep });
+        ep.resolve({
+          value: result,
+          error,
+          [TRANSACTION]: ep
+        });
       }
     };
   }
@@ -109,7 +120,11 @@ class WorkerWrapper {
     const id = crypto.randomUUID();
     const ep = new ExposedPromise();
     this.transactions.set(id, ep);
-    this._worker.postMessage({ type, id, ...data }, transfer ?? []);
+    this._worker.postMessage({
+      type,
+      id,
+      ...data
+    }, transfer ?? []);
     return ep;
   }
 
@@ -131,4 +146,7 @@ class WorkerWrapper {
   }
 }
 
-module.exports = { WorkerWrapper, TRANSACTION };
+module.exports = {
+  WorkerWrapper,
+  TRANSACTION
+};

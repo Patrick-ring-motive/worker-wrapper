@@ -1,10 +1,17 @@
-const { describe, it, beforeEach, mock } = require("node:test");
+const {
+  describe,
+  it,
+  beforeEach,
+  mock
+} = require("node:test");
 const assert = require("node:assert/strict");
 
 // ---------------------------------------------------------------------------
 // ExposedPromise tests
 // ---------------------------------------------------------------------------
-const { ExposedPromise } = require("./expose-promise");
+const {
+  ExposedPromise
+} = require("./expose-promise");
 
 describe("ExposedPromise", () => {
   it("starts in pending state", () => {
@@ -50,7 +57,9 @@ describe("ExposedPromise", () => {
     const ep = new ExposedPromise(() => {
       throw new Error("sync throw");
     });
-    await assert.rejects(ep.promise, { message: "sync throw" });
+    await assert.rejects(ep.promise, {
+      message: "sync throw"
+    });
     assert.equal(ep.status, "rejected");
   });
 
@@ -73,7 +82,9 @@ describe("ExposedPromise", () => {
   it(".finally() delegates to the inner promise", async () => {
     let called = false;
     const ep = new ExposedPromise();
-    const fin = ep.finally(() => { called = true; });
+    const fin = ep.finally(() => {
+      called = true;
+    });
     ep.resolve("done");
     await fin;
     assert.ok(called);
@@ -103,7 +114,10 @@ function createMockWorkerClass() {
       instances.push(this);
     }
     postMessage(data, transfer) {
-      this.posted.push({ data, transfer });
+      this.posted.push({
+        data,
+        transfer
+      });
     }
     terminate() {
       this.terminated = true;
@@ -112,8 +126,12 @@ function createMockWorkerClass() {
 
   return {
     MockWorker,
-    get lastInstance() { return instances[instances.length - 1]; },
-    reset() { instances = []; },
+    get lastInstance() {
+      return instances[instances.length - 1];
+    },
+    reset() {
+      instances = [];
+    },
   };
 }
 
@@ -136,11 +154,17 @@ describe("WorkerWrapper", () => {
   // -- create / init --------------------------------------------------------
 
   it("create() resolves after worker posts ready", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
 
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
 
     const wrapper = await createPromise;
     assert.ok(wrapper instanceof WorkerWrapper);
@@ -148,17 +172,28 @@ describe("WorkerWrapper", () => {
   });
 
   it("create() rejects if Worker constructor throws", async () => {
-    globalThis.Worker = function () { throw new Error("bad url"); };
-    const { WorkerWrapper } = loadModule();
-    await assert.rejects(WorkerWrapper.create("bad://url"), { message: "bad url" });
+    globalThis.Worker = function() {
+      throw new Error("bad url");
+    };
+    const {
+      WorkerWrapper
+    } = loadModule();
+    await assert.rejects(WorkerWrapper.create("bad://url"), {
+      message: "bad url"
+    });
   });
 
   it("create() rejects on onerror before ready", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("fail.js");
 
     const worker = mockWorkerCtx.lastInstance;
-    const errEvent = { type: "error", message: "load failed" };
+    const errEvent = {
+      type: "error",
+      message: "load failed"
+    };
     worker.onerror(errEvent);
 
     await assert.rejects(createPromise, (err) => {
@@ -168,11 +203,15 @@ describe("WorkerWrapper", () => {
   });
 
   it("create() rejects on onmessageerror before ready", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("fail.js");
 
     const worker = mockWorkerCtx.lastInstance;
-    const errEvent = { type: "messageerror" };
+    const errEvent = {
+      type: "messageerror"
+    };
     worker.onmessageerror(errEvent);
 
     await assert.rejects(createPromise, (err) => {
@@ -184,13 +223,21 @@ describe("WorkerWrapper", () => {
   // -- send / round-trip ----------------------------------------------------
 
   it("send() posts a message with type, id, and spread data", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
-    wrapper.send("doThing", { payload: 99 });
+    wrapper.send("doThing", {
+      payload: 99
+    });
 
     assert.equal(worker.posted.length, 1);
     const msg = worker.posted[0].data;
@@ -200,13 +247,22 @@ describe("WorkerWrapper", () => {
   });
 
   it("send() returns an ExposedPromise that resolves on worker reply", async () => {
-    const { WorkerWrapper, TRANSACTION } = loadModule();
+    const {
+      WorkerWrapper,
+      TRANSACTION
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
-    const ep = wrapper.send("compute", { n: 5 });
+    const ep = wrapper.send("compute", {
+      n: 5
+    });
     // Verify it's an ExposedPromise (duck-type check — loadModule() resets the cache)
     assert.ok(typeof ep.resolve === "function");
     assert.ok(typeof ep.reject === "function");
@@ -214,7 +270,12 @@ describe("WorkerWrapper", () => {
 
     // Simulate worker responding with the matching id
     const id = worker.posted[0].data.id;
-    worker.onmessage({ data: { id, result: 120 } });
+    worker.onmessage({
+      data: {
+        id,
+        result: 120
+      }
+    });
 
     const response = await ep;
     assert.equal(response.value, 120);
@@ -223,15 +284,26 @@ describe("WorkerWrapper", () => {
   });
 
   it("send() forwards error field from worker", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     const ep = wrapper.send("fail");
     const id = worker.posted[0].data.id;
-    worker.onmessage({ data: { id, error: "something broke" } });
+    worker.onmessage({
+      data: {
+        id,
+        error: "something broke"
+      }
+    });
 
     const response = await ep;
     assert.equal(response.error, "something broke");
@@ -239,14 +311,22 @@ describe("WorkerWrapper", () => {
   });
 
   it("send() passes transferables to postMessage", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     const buf = new ArrayBuffer(8);
-    wrapper.send("upload", { size: 8 }, [buf]);
+    wrapper.send("upload", {
+      size: 8
+    }, [buf]);
 
     assert.deepEqual(worker.posted[0].transfer, [buf]);
   });
@@ -254,33 +334,49 @@ describe("WorkerWrapper", () => {
   // -- terminate ------------------------------------------------------------
 
   it("terminate() terminates the worker and rejects pending transactions", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     const ep = wrapper.send("slow");
     wrapper.terminate();
 
     assert.ok(worker.terminated);
-    await assert.rejects(ep.promise, { message: "Worker terminated" });
+    await assert.rejects(ep.promise, {
+      message: "Worker terminated"
+    });
     assert.equal(wrapper.transactions.size, 0);
   });
 
   // -- post-init errors -----------------------------------------------------
 
   it("onerror after init rejects all pending transactions", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     const ep1 = wrapper.send("a");
     const ep2 = wrapper.send("b");
 
-    const errEvent = { message: "runtime error" };
+    const errEvent = {
+      message: "runtime error"
+    };
     worker.onerror(errEvent);
 
     await assert.rejects(ep1.promise, (e) => e === errEvent);
@@ -289,14 +385,22 @@ describe("WorkerWrapper", () => {
   });
 
   it("onmessageerror after init rejects all pending transactions", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     const ep = wrapper.send("x");
-    const errEvent = { type: "messageerror" };
+    const errEvent = {
+      type: "messageerror"
+    };
     worker.onmessageerror(errEvent);
 
     await assert.rejects(ep.promise, (e) => e === errEvent);
@@ -305,27 +409,50 @@ describe("WorkerWrapper", () => {
   // -- malformed messages ---------------------------------------------------
 
   it("ignores null event.data without throwing", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     // Should not throw
-    assert.doesNotThrow(() => worker.onmessage({ data: null }));
-    assert.doesNotThrow(() => worker.onmessage({ data: "string" }));
-    assert.doesNotThrow(() => worker.onmessage({ data: 42 }));
+    assert.doesNotThrow(() => worker.onmessage({
+      data: null
+    }));
+    assert.doesNotThrow(() => worker.onmessage({
+      data: "string"
+    }));
+    assert.doesNotThrow(() => worker.onmessage({
+      data: 42
+    }));
   });
 
   it("ignores messages with unknown id", async () => {
-    const { WorkerWrapper } = loadModule();
+    const {
+      WorkerWrapper
+    } = loadModule();
     const createPromise = WorkerWrapper.create("test.js");
     const worker = mockWorkerCtx.lastInstance;
-    worker.onmessage({ data: { type: "ready" } });
+    worker.onmessage({
+      data: {
+        type: "ready"
+      }
+    });
     const wrapper = await createPromise;
 
     assert.doesNotThrow(() =>
-      worker.onmessage({ data: { id: "unknown-uuid", result: 1 } })
+      worker.onmessage({
+        data: {
+          id: "unknown-uuid",
+          result: 1
+        }
+      })
     );
   });
 });
